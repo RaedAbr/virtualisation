@@ -1,0 +1,37 @@
+---	
+- hosts: Clients
+  remote_user: root
+
+  tasks:
+    - name: install EPEL relase
+      yum:
+       name: epel-release
+       state: latest
+
+    - name: Update(s) server(s) web
+      yum:
+       name: '*'
+       state: latest
+
+    - name: install the	latest version of Apache
+      yum:
+       name: httpd
+       state: latest
+
+    - service:
+        name: httpd
+        state: started
+
+    - name: Install php
+      yum:
+       name: php-mysql
+       state: latest
+
+    - service:
+        name: httpd
+        state: restarted
+
+    - name: install options PHP
+      yum:
+       name: php-cli
+       state: latest
