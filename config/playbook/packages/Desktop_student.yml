@@ -1,0 +1,93 @@
+---
+- hosts: Etud
+  remote_user: root
+
+  tasks:
+    - name: update all package to the latest version (ubuntu)
+      apt:
+        upgrade: dist
+
+    - name: build-essential
+      apt:
+        name: build-essential
+        state: latest
+
+    - name: gedit install
+      apt:
+        name: gedit
+        state: latest
+
+    - name: codeblocks install
+      apt:
+        name: codeblocks
+        state: latest
+
+    - name: install GIMP
+      apt:
+        name: gimp
+        state: latest
+
+    - name: install Wireshark
+      apt:
+        name: wireshark
+
+    - name: install filezilla
+      apt:
+        name: filezilla
+        state: latest
+
+    - name: install thunderbird mail
+      apt:
+        name: thunderbird
+        state: latest
+
+    - name: install thunder FR
+      apt:
+        name: thunderbird-locale-fr
+        state: latest
+
+    - name: install ghex
+      apt:
+        name: ghex
+        state: latest
+
+    - name: install nemiver
+      apt:
+        name: nemiver
+        state: latest
+
+    - apt_repository:
+        repo: 'ppa:octave/stable'
+
+    - name: update all package to the latest version (ubuntu)
+      apt:
+        upgrade: dist
+        state: latest
+
+    - name: install octave
+      apt:
+        name: octave
+        state: latest
+   
+    - name: install libreoffice
+      apt:
+        name: libreoffice
+        state: latest
+
+    - name: install geany
+      apt:
+        name: geany
+        state: latest
+
+    - name: install eclipse
+      apt:
+        name: eclipse
+        state: latest
+
+    - name: install virtualbox
+      apt: name={{ item }} state=present
+      with_items:
+       - virtualbox
+       - virtualbox-qt
+       - virtualbox-dkms
+
