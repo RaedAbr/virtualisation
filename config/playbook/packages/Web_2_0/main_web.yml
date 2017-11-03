@@ -1,2 +1,11 @@
 ---
+  vars:
+      Choice: "{{ choice }}"
+
+  tasks:
+
 - include: Web.yml
+  when: 1
+
+- include: update_web.yml
+  when: 2

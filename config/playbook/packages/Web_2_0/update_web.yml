@@ -1,0 +1,17 @@
+---
+- hosts: Clients
+  remote_user: root
+
+  tasks:
+
+    - service: name=httpd state=stopped
+
+    - name: update servers Web
+      yum: name={{ item }} state=latest
+      with_items:
+       - '*'
+       - httpd
+       - php
+       - php-mysql
+
+    - service: name=httpd state=started enabled=yes
