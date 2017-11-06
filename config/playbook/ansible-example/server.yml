@@ -1,0 +1,6 @@
+---
+#run local , distance or another
+- hosts: Clients
+  remote_user: root
+  roles:
+    - httpd

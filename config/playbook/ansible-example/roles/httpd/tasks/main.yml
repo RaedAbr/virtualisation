@@ -1,0 +1,17 @@
+---
+# tasks file for httpd
+- name: add repository epel release
+  yum:
+   name: epel-release
+   state: latest
+
+- name: install httpd 
+  yum: name={{ item }} state=latest
+  with_items:
+   - '*'
+   - nano
+   - httpd
+   - php
+   - php-mysql
+  notify:
+    - Start httpd
