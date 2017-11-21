@@ -1,0 +1,19 @@
+#Configuration required for based OS on Debian
+- name: update all package to the latest version (ubuntu)
+  apt:
+    upgrade: dist
+
+- name: build-essential
+  apt:
+    name: build-essential
+    state: latest
+
+- name: Apache 2 installation
+  apt: name={{ item }} state=latest
+  with_items:
+   - "apache2"
+   - php5-common
+   - libapache2-mod-php5
+   - php5-cli
+
+- service: name=apache2 state=started enabled=yes

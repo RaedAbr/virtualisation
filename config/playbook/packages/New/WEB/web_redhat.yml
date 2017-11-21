@@ -1,0 +1,19 @@
+#Configuration required for based OS on RedHat
+- name: install EPEL relase
+  yum:
+   name: epel-release
+   state: latest
+
+- name: Update(s) server(s) web
+  yum:
+   name: '*'
+   state: latest
+
+- name: install httpd and other
+  yum: name={{ item }} state=latest
+  with_items:
+   - httpd
+   - php
+   - php-mysql
+
+- service: name=httpd state=started enabled=yes

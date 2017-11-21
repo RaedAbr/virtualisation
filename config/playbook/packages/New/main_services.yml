@@ -1,0 +1,8 @@
+---
+  vars:
+      Choice: "{{ choice }}"
+
+  tasks:
+
+  import_tasks: main_web.yml
+  when: web

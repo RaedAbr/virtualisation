@@ -1,0 +1,5 @@
+- name: main_web
+  import_tasks: web_redhat.yml
+  when: ansible_os_platform|lower == 'redhat'
+- import_tasks: web_debian.yml
+  when: ansible_os_platform|lower == 'debian'
