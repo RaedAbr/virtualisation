@@ -1,0 +1,17 @@
+---
+# tasks file for dhcp
+- name: install DHCP CentOS7
+  yum: name={{ item }} state=latest
+  with_items:
+   - epel-relase
+   - '*'
+   - dhcp
+  when: ansible_os_family == "RedHat"
+
+- name: install DHCP ubuntu server
+  apt: name={{ item }} state=latest
+  with_items:
+   - '*'
+   - build-essential
+   - dhcp3-server
+  when: ansible_os_family == "Debian"
