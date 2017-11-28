@@ -1,0 +1,7 @@
+---
+# handlers file for dhcp
+- name: Start dhcp
+  systemd: name=dhcp state=started
+
+- name: Stop dhcp
+  systemd: name=dhcp state=stopped

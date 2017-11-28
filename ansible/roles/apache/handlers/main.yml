@@ -1,0 +1,11 @@
+---
+# handlers file for apache
+- name: Start apache
+  service:
+    name: apache
+    state: started
+
+- name: Stop apache
+  service:
+    name: apache
+    state: stopped

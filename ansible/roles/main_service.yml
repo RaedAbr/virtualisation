@@ -1,0 +1,25 @@
+---
+- hosts: client
+  remote_user: root
+
+  vars:
+      service: "service"
+
+  tasks:
+
+  - include_role:
+      name: Web
+    when:
+      - ansible_os_family == "RedHat"
+      - service == "Web"
+
+  - include_role:
+      name: apache
+    when:
+      - ansible_os_family == "Debian"
+      - service == "Web"
+
+  - include_role:
+      name: dhcp
+    when:
+      - service == "dhcp"
