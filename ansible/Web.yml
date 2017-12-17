@@ -1,0 +1,63 @@
+---
+- hosts: Clients
+  remote_user: root
+
+  tasks:
+
+    - name: install EPEL relase
+      yum:
+       name: epel-release
+       state: latest
+
+    - name: Update(s) server(s) web
+      yum:
+       name: '*'
+       state: latest
+
+    - name: nano install
+      yum:
+       name: nano
+       state: latest
+
+    - name: install httpd and other
+      yum: name={{ item }} state=latest
+      with_items:
+       - httpd
+       - php
+       - php-mysql
+
+    - name: remove welcome page
+      command: rm -f /etc/httpd/conf.d/welcome.conf state=absent
+
+    - name: change number port for listen
+      lineinfile: dest=/etc/httpd/conf/httpd.conf
+        regexp='Listen 80'
+        line='Listen 80'
+
+    - name: change url for server
+      lineinfile: dest=/etc/httpd/conf/httpd.conf
+        regexp='#ServerName wwww.example.com:80'
+        insertafter='com:80'
+        line='ServerName http://192.168.0.15:80'
+        state=present
+    
+    - name: change allowoverride
+      replace: dest=/etc/httpd/conf/httpd.conf
+        regexp='AllowOverride None'
+        replace='AllowOverride All'
+
+    - name: start httpd
+      service: name=httpd state=started
+
+    - name: allow httpd firewall
+      command: firewall-cmd --add-service=http --permanent
+
+    - name: reload firewall
+      command: firewall-cmd --reload
+ 
+    - copy:
+        src: ./index.html
+        dest: /var/www/html/
+        owner: root
+        group: root
+        mode: 0644
