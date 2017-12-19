@@ -1,7 +1,6 @@
 ---
-- hosts: client
+- hosts: Clients
   remote_user: root
-  #gather_facts: no
 
   vars:
       service: "service"
@@ -22,5 +21,4 @@
 
   - include_role:
       name: dhcp
-    when:
-      - service == "dhcp"
+    when: service == "dhcp"
