@@ -166,3 +166,62 @@ $ vagrant ssh
 
 
 
+## 28.11.2017
+
+Nous avons bien avancé aujourd'hui, nous avons réellement commencé à jouer avec Vagrant.
+
+
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.provider :virtualbox do |vb|
+    vb.name = "vagrant_client"
+  end
+end
+```
+
+
+
+```shell
+#!/bin/bash
+
+cp /vagrant/profile /etc/profile
+cp /vagrant/yum.conf /etc/yum.conf
+mv /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth0_old
+cp /vagrant/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth0
+```
+
+
+
+```shell
+#!/bin/bash
+
+vagrant destroy
+vagrant up
+vagrant halt
+VBoxManage modifyvm "vagrant_client" --nic1 bridged --nictype1 "82540EM" --bridgeadapter1 eth0
+#VBoxManage startvm "vagrant_client"
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
