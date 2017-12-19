@@ -1,7 +1,11 @@
 #!/bin/bash
 
+NICTYPE="82540EM"
+ADAPTER=enp0s31f6
+MACHINE_NAME="vagrant_client"
+
 vagrant destroy
 vagrant up
 vagrant halt
-VBoxManage modifyvm "vagrant_client" --nic1 bridged --nictype1 "82540EM" --bridgeadapter1 eth0
-#VBoxManage startvm "vagrant_client"
+VBoxManage modifyvm $MACHINE_NAME --nic1 bridged --nictype1 $NICTYPE --bridgeadapter1 $ADAPTER
+VBoxManage startvm $MACHINE_NAME --type headless
