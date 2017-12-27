@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#rm /etc/network/interfaces
 cp /vagrant/interfaces /etc/network/interfaces
 cat /vagrant/proxy >> /etc/profile
 cp /vagrant/apt.conf /etc/apt/apt.conf
