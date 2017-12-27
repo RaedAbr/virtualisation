@@ -8,8 +8,9 @@ mv /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcf
 cp /vagrant/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth0
 
 sudo yum update -y
+sudo yum install -y nano net-tools.x86_64
 
-sudo mv /etc/ssh/sshd_config /etc/ssh/sshd_config_old
-sudo cp /vagrant/sshd_config /etc/ssh/sshd_config
+#sudo mv /etc/ssh/sshd_config /etc/ssh/sshd_config_old
+#sudo cp /vagrant/sshd_config /etc/ssh/sshd_config
 
-#cp /vagrant/id_rsa.pub /home/vagrant/.ssh/authorized_keys
+cp /vagrant/id_rsa.pub /home/vagrant/.ssh/authorized_keys
