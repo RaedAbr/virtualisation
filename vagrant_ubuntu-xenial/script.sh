@@ -2,7 +2,7 @@
 
 NICTYPE="82540EM"
 ADAPTER=enp0s31f6
-MACHINE_NAME="vagrant_client"
+MACHINE_NAME="vagrant_debian_client"
 
 vagrant destroy
 vagrant up
