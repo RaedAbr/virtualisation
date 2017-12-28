@@ -1,0 +1,44 @@
+---
+# tasks file for apache2
+- name: update all package to the latest version (ubuntu)
+  apt:
+    upgrade: dist
+
+- name: build-essential
+  apt:
+    name: build-essential
+    state: latest
+
+- name: Apache 2 installation
+  apt: name={{ item }} state=latest
+  with_items:
+   - "apache2"
+  notify:
+    - restart apache
+
+- name: apache2 listen on port
+  lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen 80" line="Listen {{ port_http }}" state=present
+  notify:
+    - restart apache
+
+- name: apache2 virtualhost on port
+  lineinfile: dest=/etc/apache2/sites-available/000-default.conf regexp="^<VirtualHost \*:80>" line="<VirtualHost *:{{ port_http }}>" state=present
+  notify:
+    - restart apache
+
+- name: create virtual host file
+  template: src=./virtualhost.conf dest=/etc/apache2/sites-available/{{ domain }}.conf
+
+- name: a2ensite {{ domain }}
+  command: a2ensite {{ domain }}
+  args:
+    creates: /etc/apache2/sites-enabled/{{ domain }}.conf
+  notify:
+    - restart apache
+
+- copy:
+    src: ./index.html
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0644

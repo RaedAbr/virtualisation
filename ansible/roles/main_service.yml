@@ -15,7 +15,7 @@
       - service == "Web"
 
   - include_role:
-      name: apache
+      name: apache2
     when:
       - ansible_os_family == "Debian"
       - service == "Web"
