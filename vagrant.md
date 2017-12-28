@@ -111,7 +111,7 @@ Ceci télécharge la box en question et nous permet de choisir le provider avec 
 
 Nous pouvons maintenant commencer à éditer notre fichier `Vagrantfile` comme ceci :
 
-```shell
+```ruby
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/7"
 end
@@ -174,11 +174,11 @@ $ vagrant ssh
 
 ## Déploiement et configuration
 
-Nous avons continué nos expériences avec Vagrant avec VirtualBox comme provider. Nous avons finalement réussi à installer, configurer et lancer une machine virtuelle sous Debian (Jessie) et pouvoir s'y connecter en SSH avec l'utilisateur `vagrant`. 
+Nous avons continué nos expériences avec Vagrant avec VirtualBox comme provider. Nous avons commencé par essayer avec une image CentOS, mais arrivés à l'étape de la configuration du serveur SSH, nous n'avons pas réussi à nous connecter. D'après l'erreur survenue (`ssh_exchange_identification: read: connection reset by peer`) et [nos recherches sur le web](https://unix.stackexchange.com/questions/151860/ssh-exchange-identification-read-connection-reset-by-peer/151866#151866), il semblerait que ce soit une incompatibilité entre le client SSH des machines hepia et du serveur SSH CentOS. Nous avons finalement réussi à installer, configurer et lancer une machine virtuelle sous Debian (Jessie) et pouvoir s'y connecter en SSH avec l'utilisateur `vagrant`. Voici les fichiers de configuration et les scripts.
 
 
 
-Arborescence des fichiers :
+### Arborescence des fichiers
 
 ```t
 .
@@ -192,79 +192,13 @@ Arborescence des fichiers :
 └── Vagrantfile
 ```
 
-
-
-Fichier de configuration des sources pour `apt`, `apt.conf` :
-
-```properties
-Acquire::http::proxy "http://129.194.185.57:3128/";
-Acquire::https::proxy "https://129.194.185.57:3128/";
-Acquire::ftp::proxy "ftp://129.194.185.57:3128/";
-```
+Pour lancer toute la séquence, il faut exécuter `script.sh`. Nous allons maintenant décrire la séquence complète et dans l'ordre d'exécution.
 
 
 
-Script exécuté par Vagrant lorsque l'installation de la machine virtuelle est terminée, `bootstrap.sh` :
+### script.sh
 
-```bash
-#!/bin/bash
-
-cp /vagrant/interfaces /etc/network/interfaces
-cat /vagrant/proxy >> /etc/profile
-cp /vagrant/apt.conf /etc/apt/apt.conf
-cp /vagrant/resolv.conf /etc/resolv.conf
-
-sudo apt-get update && sudo apt-get -y upgrade
-
-mv /etc/ssh/sshd_config /etc/ssh/sshd_config_old
-cp /vagrant/sshd_config /etc/ssh/sshd_config
-```
-
-
-
-Fichier de configuration des interfaces réseau pour Debian, `interfaces` :
-
-```properties
-source /etc/network/interfaces.d/*
-
-auto lo
-iface lo inet loopback
-
-auto eth0
-iface eth0 inet static
-	address 10.194.184.196
-	netmask 255.255.255.0
-	gateway 10.194.184.1
-```
-
-
-
-Configuration du proxy (contrainte du réseau de l'hepia), `proxy` :
-
-```properties
-MY_PROXY="http://129.194.185.57:3128/"
-
-HTTP_PROXY=$MY_PROXY
-HTTPS_PROXY=$MY_PROXY
-FTP_PROXY=$MY_PROXY
-http_proxy=$MY_PROXY
-https_proxy=$MY_PROXY
-ftp_proxy=$MY_PROXY
-
-export HTTP_PROXY HTTPS_PROXY FTP_PROXY http_proxy https_proxy ftp_proxy
-```
-
-
-
-Fichier de configuration DNS (mauvaise adresse par défaut), `resolv.conf` :
-
-```properties
-nameserver 9.9.9.9
-```
-
-
-
-Script de lancement initial, `script.sh` :
+Script de lancement initial : on commence par supprimer si besoin une éventuelle image ayant le même nom (ligne 7), puis on lance l'installation (appel à `Vagrantfile`) (ligne 8) et une fois l'installation terminée, nous arrêtons la machine (ligne 9). Les deux dernières lignes concernent VirtualBox, la 1ère permet à la machine virtuelle d'accéder au LAN (mode bridge) et la dernière redémarre la VM.
 
 ```bash
 #!/bin/bash
@@ -282,7 +216,105 @@ VBoxManage startvm $MACHINE_NAME --type headless
 
 
 
-Configuration du serveur SSH sur Debian, `sshd_config` :
+### Vagrantfile
+
+Ce fichier est le fichier de configuration d'une VM par Vagrant. Sont définis le nom de l'image (téléchargée sur [Vagrant Cloud](https://app.vagrantup.com/boxes/search)) (ligne 2), le script shell qui sera exécuté à la fin de l'installation (ligne 3), le provider et le nom de la VM (lignes 3 et 4). À noter que tout le contenu du dossier où se trouve ce fichier `Vagrantfile` sera copié à la racine de la VM, dans le dossier `/vagrant`.
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.box = "debian/jessie64"
+  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.provider :virtualbox do |vb|
+    vb.name = "vagrant_debian_client"
+  end
+end
+```
+
+
+
+### bootstrap.sh
+
+Script exécuté lorsque l'installation de la machine virtuelle est terminée par cette dernière elle-même. Nous copions tous les fichiers de configuration pré-écrits et mettons à jour les applications installées, ceci faisant également office de test de connectivité internet.
+
+```bash
+#!/bin/bash
+
+cp /vagrant/interfaces /etc/network/interfaces
+cat /vagrant/proxy >> /etc/profile
+cp /vagrant/apt.conf /etc/apt/apt.conf
+cp /vagrant/resolv.conf /etc/resolv.conf
+
+sudo apt-get update && sudo apt-get -y upgrade
+
+mv /etc/ssh/sshd_config /etc/ssh/sshd_config_old
+cp /vagrant/sshd_config /etc/ssh/sshd_config
+```
+
+
+
+### interfaces
+
+Fichier de configuration des interfaces réseau pour Debian.
+
+```properties
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+	address 10.194.184.196
+	netmask 255.255.255.0
+	gateway 10.194.184.1
+```
+
+
+
+### proxy
+
+Configuration du proxy (contrainte du réseau de l'hepia).
+
+```properties
+MY_PROXY="http://129.194.185.57:3128/"
+
+HTTP_PROXY=$MY_PROXY
+HTTPS_PROXY=$MY_PROXY
+FTP_PROXY=$MY_PROXY
+http_proxy=$MY_PROXY
+https_proxy=$MY_PROXY
+ftp_proxy=$MY_PROXY
+
+export HTTP_PROXY HTTPS_PROXY FTP_PROXY http_proxy https_proxy ftp_proxy
+```
+
+
+
+### apt.conf
+
+Définition du proxy pour `apt` également.
+
+```properties
+Acquire::http::proxy "http://129.194.185.57:3128/";
+Acquire::https::proxy "https://129.194.185.57:3128/";
+Acquire::ftp::proxy "ftp://129.194.185.57:3128/";
+```
+
+
+
+### resolv.conf
+
+Fichier de configuration DNS (mauvaise adresse par défaut).
+
+```properties
+nameserver 9.9.9.9
+```
+
+
+
+### sshd_config
+
+Configuration du serveur SSH sur Debian. Les lignes en commentaires ont été enlevées pour plus de lisibilité. Le seul changement qui a été fait par rapport à la version par défaut inclue dans cette image Debian se trouve à la dernière ligne, `PasswordAuthentication yes` au lieu de `PasswordAuthentication no`, pour autoriser la connexion SSH avec mot de passe.
 
 ```properties
 Port 22
@@ -323,26 +355,11 @@ PasswordAuthentication yes
 
 
 
-`Vagrantfile` :
+### Connexion à la VM
 
-```ruby
-Vagrant.configure("2") do |config|
-  config.vm.box = "debian/jessie64"
-  config.vm.provision :shell, path: "bootstrap.sh"
-  config.vm.provider :virtualbox do |vb|
-    vb.name = "vagrant_debian_client"
-  end
-end
+Une fois que toutes ces étapes sont terminées, nous pouvons nous connecter à cette machine virtuelle (depuis le réseau hepia), par cette commande et avec mot de passe **vagrant**.
+
+```shell
+ssh vagrant@10.194.184.196
 ```
-
-
-
-
-
-
-
-
-
-
-
 
