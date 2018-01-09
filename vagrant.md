@@ -1,22 +1,22 @@
-# Vagrant et KVM (avec libvirt)
+# Vagrant
 
-## 14.11.2017
+*14.11.2017*
 
 Raed et moi (Steven) avons commencé à explorer [Vagrant](https://www.vagrantup.com/) avec [KVM](https://www.linux-kvm.org/page/Main_Page) sous l'impulsion du groupe Cluster KVM (Sylvain, Loïc, Nathanaël et Mayron). Ils aimeraient pouvoir déployer et configurer leurs VMs automatiquement.
 
-### Qu'est-ce que Vagrant ?
+## Qu'est-ce que Vagrant ?
 
 Vagrant est un outil de gestion du cycle de vie de machines virtuelles. Il permet de créer et de lancer une ou plusieurs machines virtuelles pré-configurées selon des critères définis à l'avance dans des fichiers de configuration (Vagrantfile).
 
-### Recherches et tests avec Vagrant
+## Recherches et tests avec Vagrant
 
-Le problème initial est que Vagrant peut déployer des machines virtuelles uniquement pour Virtualbox, Hyper-V et VMware par défaut. Nous avons alors cherché un moyen de déployer pour KVM.
+Le problème initial est que Vagrant peut déployer des machines virtuelles uniquement pour VirtualBox, Hyper-V et VMware par défaut. Nous avons alors cherché un moyen de déployer pour KVM.
 
 Un plugin/librairie existe, [vagrant-libvirt](https://github.com/vagrant-libvirt/vagrant-libvirt) (provider pour Vagrant). Nous avons commencé la lecture de cette doc. Nous avons utilisé la version 1.9.1 de Vagrant, qui n'est pas la dernière en date et qui est compatible avec libvirt. Nous avons réalisé toutes ces manipulations sur nos machines personnelles car la plupart du temps les droits *root* étaient requis et qu'il n'y avait pas forcément les bonnes versions des softs.
 
 Nous avons eu de la peine à utiliser Vagrant avec libvirt et KVM car Vagrant n'est pas compatible par défaut avec KVM. Nous avons cherché plusieurs tutoriels et sommes tombés sur cet unique script qui avait l'air prometteur. Avec ce script nous voulions transformer notre image `client1` existante pour la donner au groupe KVM (voir ligne 12 dans le code suivant, `centos-7-client1-disk1.vmdk`).
 
-```shell
+```bash
 BOX_NAME=vagrant-build
 BASE_DIR="`pwd`/machines"
 BOX_DIR="${BASE_DIR}/${BOX_NAME}"
@@ -75,9 +75,11 @@ Ce script a fonctionné partiellement, car il ne prenait pas l'image qu'on lui a
 
 Nous avons toutefois remarqué (**27.11.2017**) que la librairie a été mise à jour ces derniers jours et, qu'apparemment, elle est compatible avec la dernière version de Vagrant (2.0.1).
 
-### Commandes et scripts
 
-Vagrant utilise des "box" comme images de base, qu'on peut lui fournir en local (typiquement des fichiers iso ou .img) ou depuis [Vagrant Cloud](https://app.vagrantup.com/boxes/search). Dans notre cas, nous avons utilisé l'image `centos/7`. Voici une marche à suivre pour utiliser Vagrant avec Virtualbox.
+
+## Commandes et scripts pour CentOS 7
+
+Vagrant utilise des "box" comme images de base, qu'on peut lui fournir en local (typiquement des fichiers iso ou .img) ou depuis [Vagrant Cloud](https://app.vagrantup.com/boxes/search). Dans notre cas, nous avons utilisé l'image `centos/7`. Voici une marche à suivre pour utiliser Vagrant avec VirtualBox.
 
 Tout d'abord, nous créons un dossier pour Vagrant :
 
@@ -104,12 +106,12 @@ $ vagrant box add centos/7
 Ceci télécharge la box en question et nous permet de choisir le provider avec lequel nous allons travailler. Une fois cette tâche terminée (téléchargement), devons normalement obtenir le message suivant :
 
 ```shell
-==> box: Successfully added box 'centos/7' (v1710.01) for 'virtualbox'!
+==> box: Successfully added box 'centos/7' (v1710.01) for 'VirtualBox'!
 ```
 
 Nous pouvons maintenant commencer à éditer notre fichier `Vagrantfile` comme ceci :
 
-```shell
+```ruby
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/7"
 end
@@ -124,7 +126,7 @@ $ vagrant up
 Voici sa sortie :
 
 ```shell
-Bringing machine 'default' up with 'virtualbox' provider...
+Bringing machine 'default' up with 'VirtualBox' provider...
 ==> default: Importing base box 'centos/7'...
 ==> default: Matching MAC address for NAT networking...
 ==> default: Checking if box 'centos/7' is up to date...
@@ -165,4 +167,199 @@ $ vagrant ssh
 ```
 
 
+
+
+
+*Décembre 2017*
+
+## Déploiement et configuration
+
+Nous avons continué nos expériences avec Vagrant avec VirtualBox comme provider. Nous avons commencé par essayer avec une image CentOS, mais arrivés à l'étape de la configuration du serveur SSH, nous n'avons pas réussi à nous connecter. D'après l'erreur survenue (`ssh_exchange_identification: read: connection reset by peer`) et [nos recherches sur le web](https://unix.stackexchange.com/questions/151860/ssh-exchange-identification-read-connection-reset-by-peer/151866#151866), il semblerait que ce soit une incompatibilité entre le client SSH des machines hepia et du serveur SSH CentOS. Nous avons finalement réussi à installer, configurer et lancer une machine virtuelle sous Debian (Jessie) et pouvoir s'y connecter en SSH avec l'utilisateur `vagrant`. Voici les fichiers de configuration et les scripts.
+
+
+
+### Arborescence des fichiers
+
+```t
+.
+├── apt.conf
+├── bootstrap.sh
+├── interfaces
+├── proxy
+├── resolv.conf
+├── script.sh
+├── sshd_config
+└── Vagrantfile
+```
+
+Pour lancer toute la séquence, il faut exécuter `script.sh`. Nous allons maintenant décrire la séquence complète et dans l'ordre d'exécution.
+
+
+
+### script.sh
+
+Script de lancement initial : on commence par supprimer si besoin une éventuelle image ayant le même nom (ligne 7), puis on lance l'installation (appel à `Vagrantfile`) (ligne 8) et une fois l'installation terminée, nous arrêtons la machine (ligne 9). Les deux dernières lignes concernent VirtualBox, la 1ère permet à la machine virtuelle d'accéder au LAN (mode bridge) et la dernière redémarre la VM.
+
+```bash
+#!/bin/bash
+
+NICTYPE="82540EM"
+ADAPTER=enp0s31f6
+MACHINE_NAME="vagrant_debian_client"
+
+vagrant destroy
+vagrant up
+vagrant halt
+VBoxManage modifyvm $MACHINE_NAME --nic1 bridged --nictype1 $NICTYPE --bridgeadapter1 $ADAPTER
+VBoxManage startvm $MACHINE_NAME --type headless
+```
+
+
+
+### Vagrantfile
+
+Ce fichier est le fichier de configuration d'une VM par Vagrant. Sont définis le nom de l'image (téléchargée sur [Vagrant Cloud](https://app.vagrantup.com/boxes/search)) (ligne 2), le script shell qui sera exécuté à la fin de l'installation (ligne 3), le provider et le nom de la VM (lignes 3 et 4). À noter que tout le contenu du dossier où se trouve ce fichier `Vagrantfile` sera copié à la racine de la VM, dans le dossier `/vagrant`.
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.box = "debian/jessie64"
+  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.provider :virtualbox do |vb|
+    vb.name = "vagrant_debian_client"
+  end
+end
+```
+
+
+
+### bootstrap.sh
+
+Script exécuté lorsque l'installation de la machine virtuelle est terminée par cette dernière elle-même. Nous copions tous les fichiers de configuration pré-écrits et mettons à jour les applications installées, ceci faisant également office de test de connectivité internet.
+
+```bash
+#!/bin/bash
+
+cp /vagrant/interfaces /etc/network/interfaces
+cat /vagrant/proxy >> /etc/profile
+cp /vagrant/apt.conf /etc/apt/apt.conf
+cp /vagrant/resolv.conf /etc/resolv.conf
+
+sudo apt-get update && sudo apt-get -y upgrade
+
+mv /etc/ssh/sshd_config /etc/ssh/sshd_config_old
+cp /vagrant/sshd_config /etc/ssh/sshd_config
+```
+
+
+
+### interfaces
+
+Fichier de configuration des interfaces réseau pour Debian.
+
+```properties
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+	address 10.194.184.196
+	netmask 255.255.255.0
+	gateway 10.194.184.1
+```
+
+
+
+### proxy
+
+Configuration du proxy (contrainte du réseau de l'hepia).
+
+```properties
+MY_PROXY="http://129.194.185.57:3128/"
+
+HTTP_PROXY=$MY_PROXY
+HTTPS_PROXY=$MY_PROXY
+FTP_PROXY=$MY_PROXY
+http_proxy=$MY_PROXY
+https_proxy=$MY_PROXY
+ftp_proxy=$MY_PROXY
+
+export HTTP_PROXY HTTPS_PROXY FTP_PROXY http_proxy https_proxy ftp_proxy
+```
+
+
+
+### apt.conf
+
+Définition du proxy pour `apt` également.
+
+```properties
+Acquire::http::proxy "http://129.194.185.57:3128/";
+Acquire::https::proxy "https://129.194.185.57:3128/";
+Acquire::ftp::proxy "ftp://129.194.185.57:3128/";
+```
+
+
+
+### resolv.conf
+
+Fichier de configuration DNS (mauvaise adresse par défaut).
+
+```properties
+nameserver 9.9.9.9
+```
+
+
+
+### sshd_config
+
+Configuration du serveur SSH sur Debian. Les lignes en commentaires ont été enlevées pour plus de lisibilité. Le seul changement qui a été fait par rapport à la version par défaut inclue dans cette image Debian se trouve à la dernière ligne, `PasswordAuthentication yes` au lieu de `PasswordAuthentication no`, pour autoriser la connexion SSH avec mot de passe.
+
+```properties
+Port 22
+Protocol 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_dsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+UsePrivilegeSeparation yes
+KeyRegenerationInterval 3600
+ServerKeyBits 1024
+SyslogFacility AUTH
+LogLevel INFO
+LoginGraceTime 120
+PermitRootLogin without-password
+StrictModes yes
+
+RSAAuthentication yes
+PubkeyAuthentication yes
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+HostbasedAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+
+X11Forwarding yes
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+UsePAM yes
+UseDNS no
+PasswordAuthentication yes
+```
+
+
+
+### Connexion à la VM
+
+Une fois que toutes ces étapes sont terminées, nous pouvons nous connecter à cette machine virtuelle (depuis le réseau hepia), par cette commande et avec mot de passe **vagrant**.
+
+```shell
+ssh vagrant@10.194.184.196
+```
 
