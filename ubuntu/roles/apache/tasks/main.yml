@@ -43,6 +43,6 @@
     
     # Remove user
 - user:
-    name: test
+    name: vagrant
     state: absent
     remove: yes
