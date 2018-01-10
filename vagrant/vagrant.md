@@ -170,7 +170,7 @@ $ vagrant ssh
 
 
 
-*Décembre 2017*
+*Décembre 2017 - Janvier 2018*
 
 ## Déploiement et configuration
 
@@ -180,32 +180,90 @@ Nous avons continué nos expériences avec Vagrant avec VirtualBox comme provide
 
 ### Arborescence des fichiers
 
-```t
+```
 .
-├── apt.conf
-├── bootstrap.sh
-├── interfaces
-├── proxy
-├── resolv.conf
-├── script.sh
-├── sshd_config
-└── Vagrantfile
+├── debian
+│   ├── bootstrap.sh
+│   ├── conf_files_vm
+│   │   ├── apt.conf
+│   │   ├── interfaces
+│   │   ├── proxy
+│   │   ├── resolv.conf
+│   │   └── sshd_config
+│   ├── create.sh
+│   └── Vagrantfile
+└── vagrant.sh
 ```
 
-Pour lancer toute la séquence, il faut exécuter `script.sh`. Nous allons maintenant décrire la séquence complète et dans l'ordre d'exécution.
+Pour lancer toute la séquence, il faut exécuter `vagrant.sh`. Nous allons maintenant décrire la séquence complète et dans l'ordre d'exécution.
 
 
 
-### script.sh
+### vagrant.sh
 
-Script de lancement initial : on commence par supprimer si besoin une éventuelle image ayant le même nom (ligne 7), puis on lance l'installation (appel à `Vagrantfile`) (ligne 8) et une fois l'installation terminée, nous arrêtons la machine (ligne 9). Les deux dernières lignes concernent VirtualBox, la 1ère permet à la machine virtuelle d'accéder au LAN (mode bridge) et la dernière redémarre la VM.
+Ce fichier initial va copier le dossier `<template>` de l'OS voulu pour la VM dans le dossier `<folder_name>`. En effet, si on désire créer plusieurs machines virtuelles, il faut créer un dossier pour vagrant par machine virtuelle. Ce script va appeler le script suivant, `create.sh`, dans le dossier `<folder_name>`, en lui passant le nom de la VM, son IP, le nombre de CPU et la quantité de RAM voulus.
 
 ```bash
 #!/bin/bash
 
+if [[ $# != 6 ]]; then
+    echo "Usage: ./vagrant.sh <template> <folder_name> <machine_name> <ip> <cpu> <ram>"
+    echo "<folder_name> is like: debian_apache"
+    echo "<machine_name> is like: vagrant_debian_client"
+    echo "<ip> is like: 10.194.184.196"
+    echo "<cpu> is like: 2"
+    echo "<ram> is like: 512"
+    exit 1
+fi
+
+TEMPLATE=$1
+FOLDER_NAME=$2
+MACHINE_NAME=$3
+IP=$4
+CPU=$5
+RAM=$6
+
+rm -rf $FOLDER_NAME
+mkdir $FOLDER_NAME
+cp -r debian/* $FOLDER_NAME
+cd $FOLDER_NAME
+./create.sh $MACHINE_NAME $IP $CPU $RAM
+cd ..
+rm -rf $FOLDER_NAME
+
+```
+
+
+
+### create.sh
+
+Script de création : on commence par modifier le fichier `interfaces` et `Vagrantfile` avec les arguments fournis (IP, nom, CPU et RAM) avec l'utilitaire `sed` (lignes 21 à 24). On continue par supprimer si besoin une éventuelle image ayant le même nom (ligne 26), puis on lance l'installation (appel à `Vagrantfile`) (ligne 27) et une fois l'installation terminée, nous arrêtons la machine (ligne 28). Les deux dernières lignes concernent VirtualBox, la 1ère permet à la machine virtuelle d'accéder au LAN (mode bridge) et la dernière redémarre la VM.
+
+```bash
+#!/bin/bash
+
+if [[ $# != 4 ]]; then
+    echo "Usage: ./create.sh <machine_name> <ip> <cpu> <ram>"
+    echo "<machine_name> is like: vagrant_debian_client"
+    echo "<ip> is like: 10.194.184.196"
+    echo "<cpu> is like: 2"
+    echo "<ram> is like: 512"
+    exit 1
+fi
+
 NICTYPE="82540EM"
 ADAPTER=enp0s31f6
-MACHINE_NAME="vagrant_debian_client"
+FOLDER=conf_files_vm
+
+MACHINE_NAME=$1
+IP=$2
+CPU=$3
+RAM=$4
+
+sed -i -e "s/\(address \).*/\1$IP/" $FOLDER/interfaces
+sed -i -e "s/\(vb.name = \).*/\1\"$MACHINE_NAME\"/" Vagrantfile
+sed -i -e "s/\(vb.memory = \).*/\1\"$RAM\"/" Vagrantfile
+sed -i -e "s/\(vb.cpus = \).*/\1\"$CPU\"/" Vagrantfile
 
 vagrant destroy
 vagrant up
@@ -218,7 +276,7 @@ VBoxManage startvm $MACHINE_NAME --type headless
 
 ### Vagrantfile
 
-Ce fichier est le fichier de configuration d'une VM par Vagrant. Sont définis le nom de l'image (téléchargée sur [Vagrant Cloud](https://app.vagrantup.com/boxes/search)) (ligne 2), le script shell qui sera exécuté à la fin de l'installation (ligne 3), le provider et le nom de la VM (lignes 3 et 4). À noter que tout le contenu du dossier où se trouve ce fichier `Vagrantfile` sera copié à la racine de la VM, dans le dossier `/vagrant`.
+Ce fichier est le fichier de configuration d'une VM par Vagrant. Sont définis le nom de l'image (téléchargée sur [Vagrant Cloud](https://app.vagrantup.com/boxes/search)) (ligne 2), le script shell qui sera exécuté à la fin de l'installation (ligne 3), le provider et le nom de la VM (lignes 3 et 4) et la RAM et le CPU (lignes 6 et 7). À noter que tout le contenu du dossier où se trouve ce fichier `Vagrantfile` sera copié à la racine de la VM, dans le dossier `/vagrant`.
 
 ```ruby
 Vagrant.configure("2") do |config|
@@ -226,6 +284,8 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, path: "bootstrap.sh"
   config.vm.provider :virtualbox do |vb|
     vb.name = "vagrant_debian_client"
+    vb.memory = 1024
+    vb.cpus = 2
   end
 end
 ```
@@ -239,15 +299,17 @@ Script exécuté lorsque l'installation de la machine virtuelle est terminée pa
 ```bash
 #!/bin/bash
 
-cp /vagrant/interfaces /etc/network/interfaces
-cat /vagrant/proxy >> /etc/profile
-cp /vagrant/apt.conf /etc/apt/apt.conf
-cp /vagrant/resolv.conf /etc/resolv.conf
+FOLDER=conf_files_vm
+
+cp /vagrant/$FOLDER/interfaces /etc/network/interfaces
+cat /vagrant/$FOLDER/proxy >> /etc/profile
+cp /vagrant/$FOLDER/apt.conf /etc/apt/apt.conf
+cp /vagrant/$FOLDER/resolv.conf /etc/resolv.conf
 
 sudo apt-get update && sudo apt-get -y upgrade
 
 mv /etc/ssh/sshd_config /etc/ssh/sshd_config_old
-cp /vagrant/sshd_config /etc/ssh/sshd_config
+cp /vagrant/$FOLDER/sshd_config /etc/ssh/sshd_config
 ```
 
 
@@ -334,6 +396,7 @@ StrictModes yes
 
 RSAAuthentication yes
 PubkeyAuthentication yes
+AuthorizedKeysFile	%h/.ssh/authorized_keys
 IgnoreRhosts yes
 RhostsRSAAuthentication no
 HostbasedAuthentication no
