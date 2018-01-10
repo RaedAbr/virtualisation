@@ -1,0 +1,48 @@
+- name: Apache 2 installation
+  apt: name={{ item }} state=latest
+  with_items:
+   - "apache2"
+   - php5-common
+   - libapache2-mod-php5
+   - php5-cli
+  notify:
+    - restart apache
+
+- name: apache2 listen on port
+  lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen 80" line="Listen {{ port_http }}" state=present
+  notify:
+    - restart apache
+
+- name: apache2 virtualhost on port
+  lineinfile: dest=/etc/apache2/sites-available/000-default.conf regexp="^<VirtualHost \*:80>" line="<VirtualHost *:{{ port_http }}>" state=present
+  notify:
+    - restart apache
+
+- name: check if exist or not file 
+  find:
+    paths: /etc/apache2/sites-available
+    file_type: directory
+  register: find_result
+  
+- name: create virtual host file
+  template: src=./virtualhost.conf dest=/etc/apache2/sites-available/{{ domain }}.conf
+  when: find_result.examined == 2
+  
+- name: a2ensite {{ domain }}
+  command: a2ensite {{ domain }}
+  args:
+    creates: /etc/apache2/sites-enabled/{{ domain }}.conf
+  when: find_result.examined == 2
+  
+- copy:
+    src: ./index.html
+    dest: /var/www/html/
+    owner: root
+    group: root
+    mode: 0644  
+    
+    # Remove user
+- user:
+    name: test
+    state: absent
+    remove: yes

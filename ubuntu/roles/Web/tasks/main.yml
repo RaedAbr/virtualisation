@@ -1,0 +1,52 @@
+#Configuration required for based OS on RedHat
+- name: install EPEL relase
+  yum:
+   name: epel-release
+   state: latest
+
+- name: Update(s) server(s) web
+  yum:
+   name: '*'
+   state: latest
+
+- name: install httpd and other
+  yum: name={{ item }} state=latest
+  with_items:
+   - httpd
+   - php
+   - php-mysql
+  notify:
+    - Start httpd
+
+- name: remove welcome page
+  command: rm -f /etc/httpd/conf.d/welcome.conf state=absent
+
+- name: change number port for listen
+  lineinfile: dest=/etc/httpd/conf/httpd.conf
+    regexp='Listen 80'
+    line='Listen {{ port_http }}'
+
+- name: change url for server
+  lineinfile: dest=/etc/httpd/conf/httpd.conf
+    regexp='#ServerName www.example.com:80'
+    insertafter='com:80'
+    line='ServerName http://10.194.184.191:{{ port_http }}'
+    state=present
+
+- name: change allowoverride
+  replace: dest=/etc/httpd/conf/httpd.conf
+    regexp='AllowOverride None'
+    replace='AllowOverride All'
+
+- name: allow httpd firewall
+  command: firewall-cmd --add-service=http --permanent
+
+- name: reload firewall
+  command: firewall-cmd --reload
+
+- copy:
+    src: ./index.html
+    dest: /var/www/html
+    owner: root
+    group: root
+    mode: 0644

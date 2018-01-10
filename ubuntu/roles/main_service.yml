@@ -1,0 +1,29 @@
+---
+- hosts: client
+  #gather_facts: no
+  remote_user: vagrant
+  sudo: yes
+
+  vars:
+      service: "service"
+      port_http: "{{ port_http }}"
+      domain: "{{ domain }}"
+
+  tasks:
+
+  - include_role:
+      name: Web
+    when:
+      - ansible_os_family == "RedHat"
+      - service == "Web"
+
+  - include_role:
+      name: apache
+    when:
+      - ansible_os_family == "Debian"
+      - service == "Web"
+
+  - include_role:
+      name: dhcp
+    when:
+      - service == "dhcp"

@@ -1,0 +1,14 @@
+---
+# handlers file for Web
+- name: Start httpd
+  service:
+    name: httpd
+    state: started
+- name: Stop httpd
+  service:
+    name: httpd
+    state: stopped
+- name: restart apache
+  service:
+    name: httpd
+    state: restarted
