@@ -1,0 +1,29 @@
+---
+# tasks file for dhcp
+- name: install dhcp centOS
+  yum: name={{ item }} state=latest
+  with_items:
+   - dhcp
+  when:
+    - ansible_os_family == "RedHat"
+
+- name: install dhcp ubuntu
+  apt: name={{ item }} state=latest
+  with_items:
+   - '*'
+   - build-essential
+   - isc-dhcp-server
+  when:
+    - ansible_os_family == "Debian"
+
+  notify:
+    - Start dhcp
+
+#copy dhcp config and backup original
+- copy:
+    src: ./dhcpd.conf
+    dest: /etc/dhcp/dhcpd.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes

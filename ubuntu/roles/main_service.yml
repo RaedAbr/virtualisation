@@ -1,10 +1,13 @@
 ---
 - hosts: client
-  remote_user: root
   #gather_facts: no
+  remote_user: vagrant
+  sudo: yes
 
   vars:
       service: "service"
+      port_http: "{{ port_http }}"
+      domain: "{{ domain }}"
 
   tasks:
 
@@ -15,7 +18,7 @@
       - service == "Web"
 
   - include_role:
-      name: apache2
+      name: apache
     when:
       - ansible_os_family == "Debian"
       - service == "Web"
