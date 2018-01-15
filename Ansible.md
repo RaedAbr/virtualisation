@@ -4,7 +4,7 @@
 
  
 
-Pour notre projet nous avons installés un CentOS 7 avec uneconfiguration minimale, dans laquelle nous avons par la suite ajouté :
+Pour notre projet nous avons installés un CentOS 7 avec une configuration minimale, dans laquelle nous avons par la suite ajouté :
 
 -  EPEL release
 -  Ansible (version 2.4.1.0)
@@ -17,11 +17,11 @@ Pour notre projet nous avons installés un CentOS 7 avec uneconfiguration minima
 
  
 
-·     Chaque fichier doit commencerpar  « **---** » (3 tirets normaux)
+·     Chaque fichier doit commencerpar  « **---** » (3 tirets normaux) hors role
 
 ·     L’indentation est très importante, utiliser uniquement des **ESPACES**.
 
-·     Suivant l’OS, il est important de lesdifférencier, car les commandes ne sont pas multiplateformes et entraine la nonfonctionnalité du script ansible.
+·     Suivant l’OS, il est important de les différencier, car les commandes ne sont pas multiplateformes et entraine la nonfonctionnalité du script ansible.
 
  
 
@@ -39,7 +39,13 @@ Se trouve les différents groupes de machines et utilisateurspour ansible.
 
 ​	1 utilisateur PEUT être dans PLUSIEURS groupes différents.
 
+Si des problèmes de connexion en ssh arrivent , les commandes suivantes permettent de régler les problèmes
 
+```bash
+ssh-add
+ssh-keygen -t rsa -C "ansible@ip_ansible"
+ssh-copy id user@ipduclient
+```
 
 Lors d’une commande ansible, il est possible de faire appel à un certain groupe, en rajoutant celui-ci à la fin de la commande ansible. Exemple avec le groupe **Users** :
 
@@ -82,7 +88,7 @@ Valeurs importantes à mettre dans le fichier en question :
 -  remote_user : nom d’utilisateur utilisé pour se exécuter les tâches en questions.
 -  tasks : Indiquant le début de la liste des tâches qui vont être exécutées par la suite.
 
-
+hosts a priorité sur remote_user donc si on indique un groupe , cela ne sert a rien d'avoir un remote_user
 
 Exemple simple avec un ping :
 
@@ -108,6 +114,9 @@ Dans le cadre d'un service, celui-ci doit être appelé grâce à la facon suiva
 
 
 Enfin, il est possible de récupérer des variables mise avec l'option -e (voir plus haut) pour se faire le formattage du fichier se fait de la façon suivante :
+
+- Nom_variable: "{{ Nom_variable }}" = peut recuperer une liste/tableau
+- Nom_variable: "Nom_variable" = recuperer une string 
 
 ```yaml
 ---
