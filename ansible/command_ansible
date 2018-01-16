@@ -1,0 +1,12 @@
+pour installer un serveur web CENTOS
+
+ansible-playbook /etc/ansible/roles/main_service.yml -e "service=Web port_http=80 domain=10.194.184.195" --limit 'CentOS'
+
+pour installer un serveur web Debian
+
+ansible-playbook /etc/ansible/roles/main_service.yml -e "service=Web port_http=80 domain=10.194.184.196" --limit 'Debian'
+
+pour installer un serveur DHCP
+
+ansible-playbook /etc/ansible/roles/main_service.yml -e "service=dhcp" --limit 'Debian'
+ansible-playbook /etc/ansible/roles/main_service.yml -e "service=dhcp" --limit 'CentOS'
