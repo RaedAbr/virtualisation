@@ -40,9 +40,7 @@
     owner: root
     group: root
     mode: 0644  
-    
-    # Remove user
-- user:
-    name: vagrant
-    state: absent
-    remove: yes
+  
+ - file:
+      path: /var/www/html/index.html
+      state: absent
