@@ -24,3 +24,7 @@ cd $FOLDER_NAME
 ./create.sh $MACHINE_NAME $IP $CPU $RAM
 cd ..
 rm -rf $FOLDER_NAME
+
+
+##### Ansible part #####
+ssh root@10.194.184.190 "ansible-playbook /etc/ansible/roles/main_service.yml -e \"service=Web port_http=80 domain=$IP\" --limit 'Debian'"
