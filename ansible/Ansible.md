@@ -13,6 +13,22 @@ Pour notre projet nous avons installés un CentOS 7 avec une configuration minim
 
 **Attention**, la mise à jour d’Ansible peut fortement créer des soucis de compatibilités.
 
+
+
+## Accès SSH sur les machines :
+
+Si des problèmes de connexion en ssh arrivent , utiliser les commandes suivantes : 
+
+```bash
+ssh-add
+ssh-keygen -t rsa -C "ansible@ip_ansible"
+ssh-copy-id user@ipduclient
+```
+
+​	Permettent de régler les problèmes en créant puis copiant des clés SSH afin de par la suite, ne pas avoir de problèmes d'identification.
+
+​	**A noter** : la génération de clés n'est pas nécessaires si déjà éfféctué une fois.
+
 ##  Format à respecter impérativement en cas de création d’un fichier YAML (.yml) :
 
  
@@ -38,14 +54,6 @@ Il est à noter que le fichier se situant dans le fichier :
 Se trouve les différents groupes de machines et utilisateurspour ansible.
 
 ​	1 utilisateur PEUT être dans PLUSIEURS groupes différents.
-
-Si des problèmes de connexion en ssh arrivent , les commandes suivantes permettent de régler les problèmes
-
-```bash
-ssh-add
-ssh-keygen -t rsa -C "ansible@ip_ansible"
-ssh-copy id user@ipduclient
-```
 
 Lors d’une commande ansible, il est possible de faire appel à un certain groupe, en rajoutant celui-ci à la fin de la commande ansible. Exemple avec le groupe **Users** :
 
@@ -88,7 +96,7 @@ Valeurs importantes à mettre dans le fichier en question :
 -  remote_user : nom d’utilisateur utilisé pour se exécuter les tâches en questions.
 -  tasks : Indiquant le début de la liste des tâches qui vont être exécutées par la suite.
 
-hosts a priorité sur remote_user donc si on indique un groupe , cela ne sert a rien d'avoir un remote_user
+hosts a priorité sur remote_user donc si on indique un groupe , cela ne sert alors à rien d'avoir un remote_user.
 
 Exemple simple avec un ping :
 
