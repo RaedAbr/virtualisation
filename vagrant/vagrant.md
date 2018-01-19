@@ -188,6 +188,7 @@ Nous avons continué nos expériences avec Vagrant avec VirtualBox comme provide
 │   │   ├── apt.conf
 │   │   ├── interfaces
 │   │   ├── proxy
+│   │   ├── pub_key_server_ansible
 │   │   ├── resolv.conf
 │   │   └── sshd_config
 │   ├── create.sh
@@ -201,7 +202,7 @@ Pour lancer toute la séquence, il faut exécuter `vagrant.sh`. Nous allons main
 
 ### vagrant.sh
 
-Ce fichier initial va copier le dossier `<template>` de l'OS voulu pour la VM dans le dossier `<folder_name>`. En effet, si on désire créer plusieurs machines virtuelles, il faut créer un dossier pour vagrant par machine virtuelle. Ce script va appeler le script suivant, `create.sh`, dans le dossier `<folder_name>`, en lui passant le nom de la VM, son IP, le nombre de CPU et la quantité de RAM voulus.
+Ce fichier initial va copier le dossier `<template>` de l'OS voulu pour la VM dans le dossier `<folder_name>`. En effet, si on désire créer plusieurs machines virtuelles, il faut créer un dossier pour vagrant par machine virtuelle. Ce script va appeler le script suivant, `create.sh`, dans le dossier `<folder_name>`, en lui passant le nom de la VM, son IP, le nombre de CPU et la quantité de RAM voulus. Finalement, une fois que la VM a été configurée et redémarrée, on lance le script Ansible depuis la VM serveur Ansible (cf. doc Ansible). Cette dernière étape est nécessaire uniquement car nous n'avons pas les droits pour installer Ansible sur la même machine physique de l'école où est installé Vagrant.
 
 ```bash
 #!/bin/bash
@@ -231,6 +232,9 @@ cd $FOLDER_NAME
 cd ..
 rm -rf $FOLDER_NAME
 
+
+##### Ansible part #####
+ssh root@10.194.184.190 "ansible-playbook /etc/ansible/roles/main_service.yml -e \"service=Web port_http=80 domain=$IP\" --limit 'Debian'"
 ```
 
 
@@ -294,7 +298,7 @@ end
 
 ### bootstrap.sh
 
-Script exécuté lorsque l'installation de la machine virtuelle est terminée par cette dernière elle-même. Nous copions tous les fichiers de configuration pré-écrits et mettons à jour les applications installées, ceci faisant également office de test de connectivité internet.
+Script exécuté lorsque l'installation de la machine virtuelle est terminée, par elle-même. Nous copions tous les fichiers de configuration pré-écrits et mettons à jour les applications installées, ceci faisant également office de test de connectivité internet. La clé publique est celle du serveur Ansible.
 
 ```bash
 #!/bin/bash
@@ -305,8 +309,11 @@ cp /vagrant/$FOLDER/interfaces /etc/network/interfaces
 cat /vagrant/$FOLDER/proxy >> /etc/profile
 cp /vagrant/$FOLDER/apt.conf /etc/apt/apt.conf
 cp /vagrant/$FOLDER/resolv.conf /etc/resolv.conf
+cat /vagrant/$FOLDER/pub_key_server_ansible >> /home/vagrant/.ssh/authorized_keys
 
-sudo apt-get update && sudo apt-get -y upgrade
+sudo apt update
+sudo apt -y upgrade
+sudo apt -y install net-tools nano htop
 
 mv /etc/ssh/sshd_config /etc/ssh/sshd_config_old
 cp /vagrant/$FOLDER/sshd_config /etc/ssh/sshd_config

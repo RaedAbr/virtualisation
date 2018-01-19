@@ -19,7 +19,7 @@
 <p>cela manque de contenu, mais c'est du test
 &hellip;
 
-<address>Fait le random decembre 2017<br>
+<address>Fait le <?php echo date('r'); ?><br>
   par le groupe Ansible/Vagrant.</address>
 
 </body>
