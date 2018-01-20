@@ -1,12 +1,13 @@
 # Ansible  
 ## introduction
-
-Gaetan et moi (Jean-Etienne) avons commencé à explorer ansible et ces possibilités pour pouvoir déployer des installations, mises à jour, ... automatiquement dans un réseau pour pouvoir l'intégrer avec Vagrant (Read et Steven).
-Au final nous devons déployer une machine virtuelle avec un service et des paramètres donner.
-
 ## Qu'est-ce que Ansible ?
 
 Ansible est un logiciel libre d'automatisation des applications et de l'infrastructure informatique. Déploiement d'application, gestion de Configuration et livraison en continue.
+
+## But final
+Gaetan et moi (Jean-Etienne) avons commencé à explorer ansible et ces possibilités pour pouvoir déployer des installations, mises à jour, ... automatiquement dans un réseau pour pouvoir l'intégrer avec Vagrant (Read et Steven).
+Au final nous devons déployer une machine virtuelle avec un service et des paramètres donner.
+
 
 ## Version utilisée (Ansible et OS) :
 
@@ -34,17 +35,17 @@ ssh-copy-id user@ipduclient
 
 ​	Permettent de régler les problèmes en créant puis copiant des clés SSH afin de par la suite, ne pas avoir de problèmes d'identification.
 
-​	**A noter** : la génération de clés n'est pas nécessaires si déjà éfféctué une fois.
+​	**A noter** : la génération de clés n'est pas nécessaires si déjà effectué une fois.
 
-##  Format à respecter impérativement en cas de création d’un fichier YAML (.yml) :
+##  Format a respecté impérativement en cas de création d’un fichier YAML (.yml) :
 
  
 
-·     Chaque fichier doit commencerpar  « **---** » (3 tirets normaux) hors role
+·     Chaque fichier doit commencer par  « **---** » (3 tirets normaux) hors rôle
 
 ·     L’indentation est très importante, utiliser uniquement des **ESPACES**.
 
-·     Suivant l’OS, il est important de les différencier, car les commandes ne sont pas multiplateformes et entraine la nonfonctionnalité du script ansible.
+·     Suivant l’OS, il est important de les différencier, car les commandes ne sont pas multiplateformes et entraine la non-fonctionnalité du script ansible.
 
  
 
@@ -58,9 +59,9 @@ Il est à noter que le fichier se situant dans le fichier :
 /etc/ansible/hosts  
 ```
 
-Se trouve les différents groupes de machines et utilisateurspour ansible.
+Se trouve les différents groupes de machines et utilisateurs pour ansible.
 
-​	1 utilisateur PEUT être dans PLUSIEURS groupes différents.
+​	un utilisateur PEUT-être dans PLUSIEURS groupes différents.
 
 Lors d’une commande ansible, il est possible de faire appel à un certain groupe, en rajoutant celui-ci à la fin de la commande ansible. Exemple avec le groupe **Users** :
 
@@ -79,13 +80,13 @@ nom_host2 ansible_ssh_host= addresse ip 2
 nom_host3 ansible_ssh_host= addresse ip 3
 ```
 
- Mais attention, il faut penser à créer le fichier 
+ Mais attention, il faut penser à créer le fichier
 
 ```bash
 /etc/ansible/group_vars/nom_groupe
 ```
 
-contenant toutes les informations de configuration de connexion, comme ansible_ssh_user, qui n’est autre que le nom d’utilisateur utilisé pour se connecter au groupe en question.
+Il contient toutes les informations de configuration de connexion, comme ansible_ssh_user, qui n’est autre que le nom d’utilisateur utilisé pour se connecter au groupe en question.
 
 
 
@@ -99,11 +100,11 @@ ansible-playbook chemin_du_fichier/Nom_du_fichier -e "nom_variable=valeur_var"
 
 Valeurs importantes à mettre dans le fichier en question :
 
--  hosts : Qui indique  le groupe ou la machine qui exécutera nos futures taches/services
--  remote_user : nom d’utilisateur utilisé pour se exécuter les tâches en questions.
+-  hosts : Qui indique  le groupe ou la machine qui exécutera nos futures tâches/services
+-  remote_user : nom d’utilisateur utilisé pour exécuter les tâches en question.
 -  tasks : Indiquant le début de la liste des tâches qui vont être exécutées par la suite.
 
-hosts a priorité sur remote_user donc si on indique un groupe , cela ne sert alors à rien d'avoir un remote_user.
+/!\ hosts a priorité sur remote_user !
 
 Exemple simple avec un ping :
 
@@ -118,7 +119,7 @@ Exemple simple avec un ping :
 
 
 
-Dans le cadre d'un service, celui-ci doit être appelé grâce à la facon suivante :
+Dans le cadre d'un service, celui-ci doit être appelé grâce à la façon suivante :
 
 ```yaml
 - service:
@@ -128,7 +129,7 @@ Dans le cadre d'un service, celui-ci doit être appelé grâce à la facon suiva
 
 
 
-Enfin, il est possible de récupérer des variables mise avec l'option -e (voir plus haut) pour se faire le formattage du fichier se fait de la façon suivante :
+Il est possible de récupérer des variables mises avec l'option -e (voir plus haut) pour ce faire le formatage du fichier se fait de la façon suivante :
 
 - Nom_variable: "{{ Nom_variable }}" = peut recuperer une liste/tableau
 - Nom_variable: "Nom_variable" = recuperer une string 
@@ -145,18 +146,31 @@ when: 1
 - include: tasks2.yml
 when: 2
 ```
-Roles (extrait de buzut.fr):
 
-Les rôles représentent une manière d’abstraire les directives includes. C’est en quelque sorte une
-couche d’abstraction. Grâce aux rôles, il n’est plus utile de préciser les divers includes dans le
-playbook, ni les paths des fichiers de variables etc. Le playbook n’a qu’à lister les différents rôles à
-appliquer.
+## Condition When dans ansible
+
+Avec une condition when on peut faire un "if" avec une condition, ce qui permet d'appelle des roles/playbook , de faire des tâches et etc selon une condition.
+
+## Pourquoi on l'utilise ?
+
+Ont à utilisé la condition "ansible_os_family" (intégrer dans les services d'ansible) pour différencier par rapport à la famille de l'OS pour utiliser les bonnes commandes liées à celui-ci.
+Ont à aussi utilisé pour notre variable "service" qui permet de savoir quel service installer (Web,dhcp,..).
+
+
+##Roles (extrait de buzut.fr):
+
+Les rôles représentent une manière d’abstraire les directives includes.
+Grâce aux rôles, il n’est plus utile de préciser les divers includes dans le playbook, ni les paths des fichiers de variables etc.
+Le playbook n’a qu’à lister les différents rôles à appliquer.
 En outre, depuis les tasks du rôle, l’ensemble des chemins sont relatifs. Inutile donc de préciser
-l’intégralité du path lors d’un copy, template ou d’une tâche. Le nom du fichier suffit, Ansible
-s’occupe du reste.
+Le nom du fichier suffit, Ansible s’occupe du reste.
 
-Pour générer un role , il faut utiliser "ansible-galaxy + nom + init".
-Il va générer les dossiers/fichiers de base pour notre role. notre dossier contiendra les dossiers/fichiers suivants :
+## pourquoi un/des role(s)
+Car cela nous permet de généraliser une installation par service (web,dhcp,..) plus facilement et réutilisable par d'autres personnes !
+
+## génération du role
+Pour générer un rôle , il faut utiliser "ansible-galaxy + nom + init".
+Il va générer les dossiers/fichiers de base pour notre rôle. Notre dossier contiendra les dossiers/fichiers suivants :
 
 ```bash
 - Roles
@@ -172,7 +186,7 @@ Il va générer les dossiers/fichiers de base pour notre role. notre dossier con
 		- README : renseigne sur comment utilisé les rôles, variables à définir et etc.
  ```
 
- On appelle un role de la facon suivante:
+ On appelle un rôle de la façon suivante:
  
 ```yaml
 ---
@@ -182,8 +196,7 @@ Il va générer les dossiers/fichiers de base pour notre role. notre dossier con
 
 Bibliographie :
 
-https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-centos-
-7
+https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-centos-7
 https://github.com/ansible/ansible/issues/19584
 https://docs.ansible.com/ansible/latest/yum_module.html
 https://docs.ansible.com/ansible/latest/service_module.html
