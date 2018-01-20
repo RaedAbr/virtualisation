@@ -1,8 +1,15 @@
 # Ansible  
+## introduction
+
+Gaetan et moi (Jean-Etienne) avons commencé à explorer ansible et ces possibilités pour pouvoir déployer des installations, mises à jour, ... automatiquement dans un réseau pour pouvoir l'intégrer avec Vagrant (Read et Steven).
+Au final nous devons déployer une machine virtuelle avec un service et des paramètres donner.
+
+## Qu'est-ce que Ansible ?
+
+Ansible est un logiciel libre d'automatisation des applications et de l'infrastructure informatique. Déploiement d'application, gestion de Configuration et livraison en continue.
 
 ## Version utilisée (Ansible et OS) :
 
- 
 
 Pour notre projet nous avons installés un CentOS 7 avec une configuration minimale, dans laquelle nous avons par la suite ajouté :
 
@@ -138,4 +145,49 @@ when: 1
 - include: tasks2.yml
 when: 2
 ```
+Roles (extrait de buzut.fr):
 
+Les rôles représentent une manière d’abstraire les directives includes. C’est en quelque sorte une
+couche d’abstraction. Grâce aux rôles, il n’est plus utile de préciser les divers includes dans le
+playbook, ni les paths des fichiers de variables etc. Le playbook n’a qu’à lister les différents rôles à
+appliquer.
+En outre, depuis les tasks du rôle, l’ensemble des chemins sont relatifs. Inutile donc de préciser
+l’intégralité du path lors d’un copy, template ou d’une tâche. Le nom du fichier suffit, Ansible
+s’occupe du reste.
+
+Pour générer un role , il faut utiliser "ansible-galaxy + nom + init".
+Il va générer les dossiers/fichiers de base pour notre role. notre dossier contiendra les dossiers/fichiers suivants :
+
+```bash
+- Roles
+	- "Nom du role"
+		- Defaults : les variables par défaut qui seront à disposition du rôle.
+			- main.yml
+		- Vars : Variables à disposition du rôle cependant elles ont vocation à être modifiées par l’utilisateur et elles prennent le dessus sur celle du dossier « defaults » si elles sont renseignées.
+			- main.yml
+		- Tasks : ici on renseigne nos taches (comme dans un playbooks normal).
+			- main.yml
+		- Meta : Sert à renseigner les dépendances liées à nos rôles (ssl, et etc).
+			- main.yml
+		- README : renseigne sur comment utilisé les rôles, variables à définir et etc.
+ ```
+
+ On appelle un role de la facon suivante:
+ 
+```yaml
+---
+  tasks:
+- include_role: role.yml
+```
+
+Bibliographie :
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-centos-
+7
+https://github.com/ansible/ansible/issues/19584
+https://docs.ansible.com/ansible/latest/yum_module.html
+https://docs.ansible.com/ansible/latest/service_module.html
+https://docs.ansible.com/ansible/latest/apt_module.html
+https://docs.ansible.com/ansible/latest/apt_repository_module.html
+https://serversforhackers.com/c/an-ansible-tutorial
+https://buzut.fr/tirer-toute-puissance-dansible-roles/
