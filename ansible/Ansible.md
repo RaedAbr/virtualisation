@@ -1,15 +1,18 @@
+***
+
 # Ansible  
-## introduction
-## Qu'est-ce que Ansible ?
+
+## Introduction
+### Qu'est-ce que Ansible ?
 
 Ansible est un logiciel libre d'automatisation des applications et de l'infrastructure informatique. Déploiement d'application, gestion de Configuration et livraison en continue.
 
-## But final
+### But final
 Gaetan et moi (Jean-Etienne) avons commencé à explorer ansible et ces possibilités pour pouvoir déployer des installations, mises à jour, ... automatiquement dans un réseau pour pouvoir l'intégrer avec Vagrant (Read et Steven).
 Au final nous devons déployer une machine virtuelle avec un service et des paramètres donner.
 
 
-## Version utilisée (Ansible et OS) :
+### Version utilisée (Ansible et OS) :
 
 
 Pour notre projet nous avons installés un CentOS 7 avec une configuration minimale, dans laquelle nous avons par la suite ajouté :
@@ -20,6 +23,18 @@ Pour notre projet nous avons installés un CentOS 7 avec une configuration minim
 -  Nano
 
 **Attention**, la mise à jour d’Ansible peut fortement créer des soucis de compatibilités.
+
+
+
+### Format a respecté impérativement en cas de création d’un fichier YAML (.yml) :
+
+ 
+
+·     Chaque fichier doit commencer par  « **---** » (3 tirets normaux) hors rôle
+
+·     L’indentation est très importante, utiliser uniquement des **ESPACES**.
+
+·     Suivant l’OS, il est important de les différencier, car les commandes ne sont pas multiplateformes et entraine la non-fonctionnalité du script ansible.
 
 
 
@@ -36,16 +51,6 @@ ssh-copy-id user@ipduclient
 ​	Permettent de régler les problèmes en créant puis copiant des clés SSH afin de par la suite, ne pas avoir de problèmes d'identification.
 
 ​	**A noter** : la génération de clés n'est pas nécessaires si déjà effectué une fois.
-
-##  Format a respecté impérativement en cas de création d’un fichier YAML (.yml) :
-
- 
-
-·     Chaque fichier doit commencer par  « **---** » (3 tirets normaux) hors rôle
-
-·     L’indentation est très importante, utiliser uniquement des **ESPACES**.
-
-·     Suivant l’OS, il est important de les différencier, car les commandes ne sont pas multiplateformes et entraine la non-fonctionnalité du script ansible.
 
  
 
@@ -147,17 +152,17 @@ when: 1
 when: 2
 ```
 
-## Condition When dans ansible
+### Condition When dans ansible
 
 Avec une condition when on peut faire un "if" avec une condition, ce qui permet d'appelle des roles/playbook , de faire des tâches et etc selon une condition.
 
-## Pourquoi on l'utilise ?
+### Pourquoi on l'utilise ?
 
 Ont à utilisé la condition "ansible_os_family" (intégrer dans les services d'ansible) pour différencier par rapport à la famille de l'OS pour utiliser les bonnes commandes liées à celui-ci.
 Ont à aussi utilisé pour notre variable "service" qui permet de savoir quel service installer (Web,dhcp,..).
 
 
-##Roles (extrait de buzut.fr):
+##Rôles (extrait de buzut.fr):
 
 Les rôles représentent une manière d’abstraire les directives includes.
 Grâce aux rôles, il n’est plus utile de préciser les divers includes dans le playbook, ni les paths des fichiers de variables etc.
@@ -165,10 +170,10 @@ Le playbook n’a qu’à lister les différents rôles à appliquer.
 En outre, depuis les tasks du rôle, l’ensemble des chemins sont relatifs. Inutile donc de préciser
 Le nom du fichier suffit, Ansible s’occupe du reste.
 
-## pourquoi un/des role(s)
+### Pourquoi un/des rôle(s)
 Car cela nous permet de généraliser une installation par service (web,dhcp,..) plus facilement et réutilisable par d'autres personnes !
 
-## génération du role
+### Génération du rôle
 Pour générer un rôle , il faut utiliser "ansible-galaxy + nom + init".
 Il va générer les dossiers/fichiers de base pour notre rôle. Notre dossier contiendra les dossiers/fichiers suivants :
 
@@ -184,15 +189,17 @@ Il va générer les dossiers/fichiers de base pour notre rôle. Notre dossier co
 		- Meta : Sert à renseigner les dépendances liées à nos rôles (ssl, et etc).
 			- main.yml
 		- README : renseigne sur comment utilisé les rôles, variables à définir et etc.
- ```
+```
 
  On appelle un rôle de la façon suivante:
- 
+
 ```yaml
 ---
   tasks:
 - include_role: role.yml
 ```
+
+
 
 Bibliographie :
 
