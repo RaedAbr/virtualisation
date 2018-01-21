@@ -292,7 +292,7 @@ Pour notre projet nous avons installés un CentOS 7 avec une configuration minim
 
 \subsubsection{Format à respecter impérativement en cas de création d'un fichier YAML (.yml)}
 \begin{itemize}
-    \item Chaque fichier doit commencer par  « \textbf{---} » (3 tirets normaux) hors rôle
+    \item Chaque fichier doit commencer par "\textbf{---}" (3 tirets normaux) hors rôle
     \item L'indentation est très importante, utiliser uniquement des \textbf{ESPACES}
     \item Suivant l'OS, il est important de les différencier, car les commandes ne sont pas multiplateformes et entraine la non-fonctionnalité du script ansible
 \end{itemize}
@@ -348,7 +348,7 @@ Valeurs importantes à mettre dans le fichier en question :
     \item remote\_user : nom d'utilisateur utilisé pour exécuter les tâches en question.
     \item tasks : Indiquant le début de la liste des tâches qui vont être exécutées par la suite.
 \end{itemize}
-/!\ hosts a priorité sur remote\_user !
+\textbf{Attention !} : hosts a priorité sur remote\_user !
 \bigbreak
 Exemple simple avec un ping :
 \begin{code}
@@ -379,7 +379,7 @@ Dans le cadre d'un service, celui-ci doit être appelé grâce à la façon suiv
 \bigbreak
 Il est possible de récupérer des variables mises avec l'option -e (voir plus haut) pour ce faire le formatage du fichier se fait de la façon suivante :
 \begin{itemize}
-    \item Nom\_variable: "{{ Nom\_variable }}" = peut recuperer une liste/tableau
+    \item Nom\_variable: "{{ Nom\_variable }}" = récupérer une string
     \item Nom\_variable: "Nom\_variable" = recuperer une string
 \end{itemize}
 \begin{code}
@@ -454,7 +454,6 @@ On appelle un rôle de la façon suivante:
 
 \subsection{Bibliographie}
 \begin{itemize}
-    \item \url{https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-centos-7}
     \item \url{https://github.com/ansible/ansible/issues/19584}
     \item \url{https://docs.ansible.com/ansible/latest/yum_module.html}
     \item \url{https://docs.ansible.com/ansible/latest/service_module.html}
