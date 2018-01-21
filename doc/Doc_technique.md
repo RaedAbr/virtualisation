@@ -1,14 +1,14 @@
-##### 		ANSIBLE ET VAGRANT
+# 		ANSIBLE ET VAGRANT
 
-ABDENNADHER  Raed		DELUCINGE Jean-Etienne LIATTI Steven	RINGOT Gaëtan
+ABDENNADHER Raed, DELUCINGE Jean-Etienne, LIATTI Steven, RINGOT Gaëtan
 
 
 
 <u>Cours :</u>  Virtualisation des SI, 2017-2018
 
-<u>Enseignant</u> : Brero Massimo Damiano    <u>Assistant</u> : Sebastien Chassot
+<u>Enseignant</u> : Massimo Brero    <u>Assistant</u> : Sébastien Chassot
 
-##### <u>Table des matières</u> :
+## <u>Table des matières</u> :
 
 [TOC]
 

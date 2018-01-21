@@ -1,0 +1,467 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[utf8]{inputenc}
+\renewcommand\familydefault{\sfdefault}
+\usepackage[T1]{fontenc}
+\usepackage[francais]{babel}
+\usepackage[left=2cm,top=2cm,right=2cm,bottom=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{minted}
+\usemintedstyle{colorful}
+\usepackage{float}
+\floatplacement{figure}{H}
+\usepackage{authblk}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=blue
+}
+
+\usepackage{caption}
+\newenvironment{code}{\captionsetup{type=listing}}{}
+
+\begin{document}
+
+\title{Vagrant et Ansible}
+\author{Raed Abdennadher, Jean-Etienne Delucinge, Steven Liatti, Gaëtan Ringot}
+\affil{\small Cours de Virtualisation des SI - Prof. Massimo Brero}
+\affil{\small Hepia ITI 3\up{ème} année}
+\maketitle
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=0.6\textwidth]{intro.jpg}
+	\end{center}
+\end{figure}
+\newpage
+
+\tableofcontents
+\renewcommand\listoflistingscaption{Table des scripts de code}
+\listoflistings
+
+\newpage
+
+
+\section{Vagrant}
+Nous (Raed et Steven) avons commencé à explorer \href{https://www.vagrantup.com/}{Vagrant} avec
+\href{https://www.linux-kvm.org/page/Main_Page}{KVM} sous l'impulsion du groupe Cluster KVM
+(Sylvain, Loïc, Nathanaël et Mayron). Ils aimeraient pouvoir déployer et configurer leurs VMs automatiquement.
+
+\subsection{Qu'est-ce que Vagrant ?}
+Vagrant est un outil de gestion du cycle de vie de machines virtuelles.
+Il permet de créer et de lancer une ou plusieurs machines virtuelles pré-configurées
+selon des critères définis à l'avance dans des fichiers de configuration (Vagrantfile).
+
+\subsection{Recherches et tests avec Vagrant}
+Le problème initial est que Vagrant peut déployer des machines virtuelles uniquement pour
+VirtualBox, Hyper-V et VMware par défaut. Nous avons alors cherché un moyen de déployer
+pour KVM. Un plugin/librairie existe, \href{https://github.com/vagrant-libvirt/vagrant-libvirt}{vagrant-libvirt}
+(provider pour Vagrant). Nous avons commencé la lecture de cette doc. Nous avons utilisé
+la version 1.9.1 de Vagrant, qui n'est pas la dernière en date et qui est compatible avec
+libvirt. Nous avons réalisé toutes ces manipulations sur nos machines personnelles car
+la plupart du temps les droits \mintinline{text}{root} étaient requis et qu'il n'y avait
+pas forcément les bonnes versions des softs.
+​Nous avons eu de la peine à utiliser Vagrant avec libvirt et KVM car Vagrant n'est pas
+compatible par défaut avec KVM. Nous avons cherché plusieurs tutoriels et sommes tombés
+sur cet unique script qui avait l'air prometteur. Avec ce script nous voulions
+transformer notre image \mintinline{text}{client1} existante pour la donner au groupe
+KVM (voir ligne 12 dans le code suivant, \mintinline{text}{centos-7-client1-disk1.vmdk}).
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{bash}{../vagrant/libvirt/script.sh}
+    \caption{Script Vagrant et libvirt}
+    \label{script_libvirt}
+\end{code}
+\bigbreak
+​Ce script a fonctionné partiellement, car il ne prenait pas l'image qu'on lui a fournit,
+mais une image par défaut. \textbf{C'est pour cela que nous avons abandonné l'idée d'utiliser
+Vagrant avec KVM et libvirt}. Nous avons toutefois remarqué (\textbf{27.11.2017}) que la librairie
+a été mise à jour ces derniers jours et, qu'apparemment, elle est compatible avec la dernière version
+de Vagrant (2.0.1).
+
+\subsection{Commandes et scripts pour CentOS 7}
+Vagrant utilise des "box" comme images de base, qu'on peut lui fournir en local (typiquement des fichiers
+iso ou .img) ou depuis \href{https://app.vagrantup.com/boxes/search}{Vagrant Cloud}. Dans notre cas, nous avons
+utilisé l'image \mintinline{text}{centos/7}. Voici une marche à suivre pour utiliser Vagrant avec VirtualBox.
+Tout d'abord, nous créons un dossier pour Vagrant :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{bash}
+$ mkdir vagrant_folder
+$ cd vagrant_folder
+$ vagrant init
+    \end{minted}
+    \caption{vagrant init}
+    \label{vagrantinit}
+\end{code}
+\bigbreak
+\mintinline{text}{vagrant init} crée un fichier de configuration nommé \mintinline{text}{Vagrantfile},
+dont voici le contenu initial :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{ruby}
+Vagrant.configure("2") do |config|
+  config.vm.box = "base"
+end
+    \end{minted}
+    \caption{Vagrantfile}
+    \label{Vagrantfile}
+\end{code}
+\bigbreak
+Ensuite, nous exécutons la commande \mintinline{bash}{vagrant box add centos/7}, qui télécharge la box
+en question et nous permet de choisir le provider avec lequel nous allons travailler. Une fois cette tâche
+terminée (téléchargement), devons normalement obtenir le message suivant :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{bash}
+==> box: Successfully added box 'centos/7' (v1710.01) for 'VirtualBox'!
+    \end{minted}
+\end{code}
+\bigbreak
+Nous pouvons maintenant commencer à éditer notre fichier \mintinline{text}{Vagrantfile} comme ceci :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{ruby}
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+end
+    \end{minted}
+    \caption{Vagrantfile centos}
+    \label{Vagrantfilecentos}
+\end{code}
+\bigbreak
+Finalement, nous lançons la machine virtuelle avec la commande suivante : \mintinline{bash}{vagrant up}.
+Nous constatons que par défaut le port pour SSH est le 2222, que l'IP est la 127.0.0.1 et que
+\mintinline{text}{username = vagrant} et utilise une paire de clé pour l'authentification. Finalement nous
+pouvons nous connecter à la machine virtuelle avec la commande suivante : \mintinline{bash}{vagrant ssh}
+
+
+\subsection{Déploiement et configuration}
+Nous avons continué nos expériences avec Vagrant avec VirtualBox comme provider. Nous avons commencé par
+essayer avec une image CentOS, mais arrivés à l'étape de la configuration du serveur SSH, nous n'avons pas
+réussi à nous connecter. D'après l'erreur survenue
+(\textit{ssh\_exchange\_identification: read: connection reset by peer}) et
+\href{https://unix.stackexchange.com/questions/151860/ssh-exchange-identification-read-connection-reset-by-peer/151866#151866}{nos recherches sur le web},
+il semblerait que ce soit une incompatibilité entre le client SSH des machines hepia et du serveur SSH CentOS.
+Nous avons finalement réussi à installer, configurer et lancer une machine virtuelle sous Debian (Jessie) et pouvoir
+s'y connecter en SSH avec l'utilisateur \mintinline{text}{vagrant}. Voici les fichiers de configuration et les scripts.
+\bigbreak
+Pour lancer toute la séquence, il faut exécuter \mintinline{text}{vagrant.sh}. Nous allons maintenant décrire la séquence
+complète et dans l'ordre d'exécution.
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{text}
+.
+|-- debian
+|   |-- bootstrap.sh
+|   |-- conf_files_vm
+|   |   |-- apt.conf
+|   |   |-- interfaces
+|   |   |-- proxy
+|   |   |-- pub_key_server_ansible
+|   |   |-- resolv.conf
+|   |   |-- sshd_config
+|   |-- create.sh
+|   |-- Vagrantfile
+|-- vagrant.sh
+    \end{minted}
+    \caption{Arborescence des fichiers pour Vagrant}
+    \label{Arborescence}
+\end{code}
+\bigbreak
+
+​Ce fichier initial (\ref{vagrant.sh}) va copier le dossier \mintinline{text}{<template>} de l'OS voulu pour la VM dans le dossier
+\mintinline{text}{<folder_name>}. En effet, si on désire créer plusieurs machines virtuelles, il faut créer un
+dossier pour vagrant par machine virtuelle. Ce script va appeler le script suivant, \mintinline{text}{create.sh},
+dans le dossier \mintinline{text}{<folder_name>}, en lui passant le nom de la VM, son IP, le nombre de CPU et la
+quantité de RAM voulus. ​Finalement, une fois que la VM a été configurée et redémarrée, on lance le script Ansible
+depuis la VM serveur Ansible (cf. doc Ansible). Cette dernière étape est nécessaire uniquement car nous n'avons pas
+les droits pour installer Ansible sur la même machine physique de l'école où est installé Vagrant.
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{bash}{../vagrant/vagrant.sh}
+    \caption{vagrant.sh}
+    \label{vagrant.sh}
+\end{code}
+\bigbreak
+
+Script de création (\ref{create.sh}) : on commence par modifier le fichier \mintinline{text}{interfaces} et \mintinline{text}{Vagrantfile}
+avec les arguments fournis (IP, nom, CPU et RAM) avec l'utilitaire \mintinline{text}{sed} (lignes 21 à 24).
+On continue par supprimer si besoin une éventuelle image ayant le même nom (ligne 26), puis on lance l'installation
+(appel à \mintinline{text}{Vagrantfile}) (ligne 27) et une fois l'installation terminée, nous arrêtons la machine
+(ligne 28). Les deux dernières lignes concernent VirtualBox, la 1ère permet à la machine virtuelle d'accéder au LAN
+(mode bridge) et la dernière redémarre la VM.
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{bash}{../vagrant/debian/create.sh}
+    \caption{create.sh}
+    \label{create.sh}
+\end{code}
+\bigbreak
+
+Ce fichier (\ref{Vagrantfiledebian}) est le fichier de configuration d'une VM par Vagrant. Sont définis le nom de l'image (téléchargée sur
+\href{https://app.vagrantup.com/boxes/search}{Vagrant Cloud}) (ligne 2), le script shell qui sera exécuté à la fin
+de l'installation (ligne 3), le provider et le nom de la VM (lignes 3 et 4) et la RAM et le CPU (lignes 6 et 7).
+​À noter que tout le contenu du dossier où se trouve ce fichier \mintinline{text}{Vagrantfile} sera copié à la
+racine de la VM, dans le dossier \mintinline{text}{/vagrant}.
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{ruby}{../vagrant/debian/Vagrantfile}
+    \caption{Vagrantfile debian}
+    \label{Vagrantfiledebian}
+\end{code}
+\bigbreak
+
+Script (\ref{bootstrap.sh}) exécuté lorsque l'installation de la machine virtuelle est terminée, par elle-même.
+Nous copions tous les fichiers de configuration pré-écrits et mettons à jour les applications
+installées, ceci faisant également office de test de connectivité internet. La clé publique est
+celle du serveur Ansible.
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{bash}{../vagrant/debian/bootstrap.sh}
+    \caption{bootstrap.sh}
+    \label{bootstrap.sh}
+\end{code}
+\bigbreak
+
+\newpage
+Fichier de configuration des interfaces réseau pour Debian.
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{text}{../vagrant/debian/conf_files_vm/interfaces}
+    \caption{interfaces}
+    \label{interfaces}
+\end{code}
+\bigbreak
+
+Configuration du proxy (contrainte du réseau de l'hepia).
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{text}{../vagrant/debian/conf_files_vm/proxy}
+    \caption{proxy}
+    \label{proxy}
+\end{code}
+\bigbreak
+
+Définition du proxy pour \mintinline{text}{apt} également.
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{text}{../vagrant/debian/conf_files_vm/apt.conf}
+    \caption{apt.conf}
+    \label{apt.conf}
+\end{code}
+\bigbreak
+
+Fichier de configuration DNS (mauvaise adresse par défaut).
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{text}{../vagrant/debianresolvconf_files_vm/resolv.conf}
+    \caption{resolv.conf}
+    \label{resolv.conf}
+\end{code}
+\bigbreak
+
+Configuration du serveur SSH sur Debian. Le seul changement qui a été fait par rapport à la version
+par défaut inclue dans cette image Debian se trouve à la dernière ligne,
+\mintinline{text}{PasswordAuthentication yes} au lieu de \mintinline{text}{PasswordAuthentication no}, pour autoriser
+la connexion SSH avec mot de passe.
+\begin{code}
+    \inputminted[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{text}{../vagrant/debian/conf_files_vm/sshd_config}
+    \caption{sshd\_config}
+    \label{sshd_config}
+\end{code}
+\bigbreak
+
+Une fois que toutes ces étapes sont terminées, nous pouvons nous connecter à cette machine
+virtuelle (depuis le réseau hepia), par cette commande et avec mot de passe \textbf{vagrant} :
+\mintinline{bash}{ssh vagrant@10.194.184.xxx}.
+
+
+
+
+
+\section{Ansible}
+\subsection{Introduction}
+\subsubsection{Qu'est-ce que Ansible ?}
+Ansible est un logiciel libre d'automatisation des applications et de l'infrastructure informatique.
+Déploiement d'application, gestion de Configuration et livraison en continue.
+\subsubsection{But final}
+Nous (Gaetan et Jean-Etienne) avons commencé à explorer Ansible et ces possibilités pour pouvoir
+déployer des installations, mises à jour, ... automatiquement dans un réseau pour pouvoir l'intégrer
+avec Vagrant (Read et Steven). Au final nous devons déployer une machine virtuelle avec un service et
+des paramètres donner.
+
+\subsubsection{Version utilisée (Ansible et OS)}
+Pour notre projet nous avons installés un CentOS 7 avec une configuration minimale, dans laquelle nous avons par la suite ajouté :
+\begin{itemize}
+    \item EPEL release
+    \item Ansible (version 2.4.1.0)
+    \item Python (version 2.7.5)
+    \item Nano
+\end{itemize}
+\textbf{Attention}, la mise à jour d'Ansible peut fortement créer des soucis de compatibilités.
+
+\subsubsection{Format à respecter impérativement en cas de création d'un fichier YAML (.yml)}
+\begin{itemize}
+    \item Chaque fichier doit commencer par  « \textbf{---} » (3 tirets normaux) hors rôle
+    \item L'indentation est très importante, utiliser uniquement des \textbf{ESPACES}
+    \item Suivant l'OS, il est important de les différencier, car les commandes ne sont pas multiplateformes et entraine la non-fonctionnalité du script ansible
+\end{itemize}
+
+\subsection{Accès SSH sur les machines}
+Si des problèmes de connexion en ssh arrivent , utiliser les commandes suivantes :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{bash}
+$ ssh-add
+$ ssh-keygen -t rsa -C "ansible@ip_ansible"
+$ ssh-copy-id user@ipduclient
+    \end{minted}
+    \caption{SSH Ansible}
+    \label{ssh_ansible}
+\end{code}
+\bigbreak
+Permettent de régler les problèmes en créant puis copiant des clés SSH afin de par la suite, ne pas avoir de problèmes d'identification.
+\textbf{À noter} : la génération de clés n'est pas nécessaires si déjà effectué une fois.
+
+\subsection{Principe des groupes d'utilisateurs/machines}
+Il est à noter que le fichier se situant dans le dossier \mintinline{text}{/etc/ansible/hosts} se trouvent les
+différents groupes de machines et utilisateurs pour ansible.
+Un utilisateur PEUT être dans PLUSIEURS groupes différents. Lors d'une commande ansible, il est possible de faire
+appel à un certain groupe, en rajoutant celui-ci à la fin de la commande ansible.
+Exemple avec le groupe \textbf{Users} : \mintinline{text}{ansible -m ping Users}
+\bigbreak
+Afin de rajouter un groupe, il faut reprendre la syntaxe suivante :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{text}
+[nom_groupe]
+nom_host1 ansible_ssh_host= addresse ip 1
+nom_host2 ansible_ssh_host= addresse ip 2
+nom_host3 ansible_ssh_host= addresse ip 3
+    \end{minted}
+    \caption{Utilisateurs Ansible}
+    \label{Utilisateurs_ansible}
+\end{code}
+\bigbreak
+Mais attention, il faut penser à créer le fichier \mintinline{text}{/etc/ansible/group_vars/nom_groupe}.
+Il contient toutes les informations de configuration de connexion, comme ansible\_ssh\_user, qui n'est autre
+que le nom d'utilisateur utilisé pour se connecter au groupe en question.
+
+
+
+\subsection{Utilisation de playbooks}
+Pour lancer un playbook dans Ansible il faut exécuter la commande suivante :
+\\
+\mintinline{text}{ansible-playbook chemin_du_fichier/Nom_du_fichier -e "nom_variable=valeur_var"}.
+\bigbreak
+Valeurs importantes à mettre dans le fichier en question :
+\begin{itemize}
+    \item hosts : Qui indique  le groupe ou la machine qui exécutera nos futures tâches/services
+    \item remote\_user : nom d'utilisateur utilisé pour exécuter les tâches en question.
+    \item tasks : Indiquant le début de la liste des tâches qui vont être exécutées par la suite.
+\end{itemize}
+/!\ hosts a priorité sur remote\_user !
+\bigbreak
+Exemple simple avec un ping :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{yaml}
+---
+- hosts: Users
+  remote_user: root
+
+  tasks:
+    - ping:
+    \end{minted}
+    \caption{Ping}
+    \label{Ping}
+\end{code}
+\bigbreak
+
+Dans le cadre d'un service, celui-ci doit être appelé grâce à la façon suivante :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{yaml}
+- service:
+     name: Nom_du_service_à_exécuter
+     state: Etat_futur_du_service (started, stopped, restarted, reloaded)
+    \end{minted}
+    \caption{Service}
+    \label{Service}
+\end{code}
+\bigbreak
+\bigbreak
+Il est possible de récupérer des variables mises avec l'option -e (voir plus haut) pour ce faire le formatage du fichier se fait de la façon suivante :
+\begin{itemize}
+    \item Nom\_variable: "{{ Nom\_variable }}" = peut recuperer une liste/tableau
+    \item Nom\_variable: "Nom\_variable" = recuperer une string
+\end{itemize}
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{yaml}
+---
+  vars:
+      Nom_variable: "{{ Nom_variable }}"
+
+  tasks:
+- include: tasks1.yml
+when: 1
+
+- include: tasks2.yml
+when: 2
+    \end{minted}
+    \caption{Variables}
+    \label{Variables}
+\end{code}
+\bigbreak
+
+\subsubsection{Condition When dans ansible}
+Avec une condition when on peut faire un "if" avec une condition, ce qui permet d'appelle des roles/playbook ,
+de faire des tâches et etc selon une condition.
+
+\subsubsection{Pourquoi on l'utilise ?}
+Nous avons utilisé la condition "ansible\_os\_family" (intégrer dans les services d'ansible) pour différencier par
+rapport à la famille de l'OS pour utiliser les bonnes commandes liées à celui-ci. Nous avons aussi utilisé pour
+notre variable "service" qui permet de savoir quel service installer (Web,dhcp,..).
+
+\subsubsection{Rôles (extrait de buzut.fr)}
+Les rôles représentent une manière d'abstraire les directives includes. Grâce aux rôles, il n'est plus utile de
+préciser les divers includes dans le playbook, ni les paths des fichiers de variables etc.​	Le playbook n'a qu'à
+lister les différents rôles à appliquer. En outre, depuis les tasks du rôle, l'ensemble des chemins sont relatifs.
+Inutile donc de préciser le nom du fichier suffit, Ansible s'occupe du reste.
+
+\subsubsection{Pourquoi un/des rôle(s)}
+Car cela nous permet de généraliser une installation par service (web,dhcp,..) plus facilement et réutilisable
+par d'autres personnes !
+
+\subsubsection{Génération du rôle}
+Pour générer un rôle , il faut utiliser "ansible-galaxy + nom + init". Il va générer les dossiers/fichiers de
+base pour notre rôle. Notre dossier contiendra les dossiers/fichiers suivants :
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{yaml}
+- Roles
+    - "Nom du role"
+        - Defaults : les variables par défaut qui seront à disposition du rôle.
+            - main.yml
+        - Vars : Variables à disposition du rôle cependant elles ont vocation à être modifiées par l'utilisateur et elles prennent le dessus sur celle du dossier « defaults » si elles sont renseignées.
+            - main.yml
+        - Tasks : ici on renseigne nos taches (comme dans un playbooks normal).
+            - main.yml
+        - Meta : Sert à renseigner les dépendances liées à nos rôles (ssl, et etc).
+            - main.yml
+        - README : renseigne sur comment utilisé les rôles, variables à définir et etc.
+    \end{minted}
+    \caption{Gestion des rôles}
+    \label{gestion_roles}
+\end{code}
+\bigbreak
+On appelle un rôle de la façon suivante:
+\begin{code}
+    \begin{minted}[breaklines,breaksymbol=,linenos,frame=single,stepnumber=1,tabsize=2]{yaml}
+---
+  tasks:
+- include_role: role.yml
+    \end{minted}
+    \caption{Appel d'un rôle}
+    \label{appel_role}
+\end{code}
+\bigbreak
+
+\subsection{Bibliographie}
+\begin{itemize}
+    \item \url{https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-centos-7}
+    \item \url{https://github.com/ansible/ansible/issues/19584}
+    \item \url{https://docs.ansible.com/ansible/latest/yum_module.html}
+    \item \url{https://docs.ansible.com/ansible/latest/service_module.html}
+    \item \url{https://docs.ansible.com/ansible/latest/apt_module.html}
+    \item \url{https://docs.ansible.com/ansible/latest/apt_repository_module.html}
+    \item \url{https://serversforhackers.com/c/an-ansible-tutorial}
+    \item \url{https://buzut.fr/tirer-toute-puissance-dansible-roles/}
+\end{itemize}
+
+\end{document}
