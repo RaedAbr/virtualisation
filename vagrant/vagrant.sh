@@ -17,6 +17,9 @@ IP=$4
 CPU=$5
 RAM=$6
 
+VBoxManage controlvm $MACHINE_NAME poweroff
+VBoxManage unregistervm $MACHINE_NAME --delete
+
 rm -rf $FOLDER_NAME
 mkdir $FOLDER_NAME
 cp -r debian/* $FOLDER_NAME
